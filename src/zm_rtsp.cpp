@@ -431,7 +431,11 @@ int RtspThread::run()
                 }
                 else
                 {
-                    trackUrl += "/" + controlUrl;
+					if ( *trackUrl.rbegin() != '/') {
+						trackUrl += "/" + controlUrl;
+					} else {
+						trackUrl += controlUrl;
+					}
                 }
                 rtpClock = mediaDesc->getClock();
                 codecId = mFormatContext->streams[i]->codec->codec_id;
