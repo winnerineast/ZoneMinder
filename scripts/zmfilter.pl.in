@@ -806,23 +806,26 @@ sub uploadArchFile
         }
         else
         {
-            my $host = $Config{ZM_UPLOAD_HOST};
-            $host .= ":".$Config{ZM_UPLOAD_PORT} if $Config{ZM_UPLOAD_PORT};
-            Info( "Uploading to ".$host." using SFTP\n" );
-            my %sftpOptions = ( host=>$Config{ZM_UPLOAD_HOST}, user=>$Config{ZM_UPLOAD_USER} );
-            $sftpOptions{password} = $Config{ZM_UPLOAD_PASS} if $Config{ZM_UPLOAD_PASS};
-            $sftpOptions{port} = $Config{ZM_UPLOAD_PORT} if $Config{ZM_UPLOAD_PORT};
-            $sftpOptions{timeout} = $Config{ZM_UPLOAD_TIMEOUT} if $Config{ZM_UPLOAD_TIMEOUT};
-            $sftpOptions{more} = [ '-o'=>'StrictHostKeyChecking=no' ];
-            $Net::SFTP::Foreign::debug = -1 if $Config{ZM_UPLOAD_DEBUG};
-            my $sftp = Net::SFTP::Foreign->new( $Config{ZM_UPLOAD_HOST}, %sftpOptions );
-            if ( $sftp->error )
-            {
-                Error( "Can't create SFTP connection: ".$sftp->error );
-                return( 0 );
-            }
-            $sftp->setcwd( $Config{ZM_UPLOAD_REM_DIR} ) or Error( "SFTP - Can't setcwd: ".$sftp->error ) if $Config{ZM_UPLOAD_REM_DIR};
-            $sftp->put( $archLocPath, $archFile ) or Error( "SFTP - Can't upload '$archLocPath': ".$sftp->error );
+			eval {
+				my $host = $Config{ZM_UPLOAD_HOST};
+				$host .= ":".$Config{ZM_UPLOAD_PORT} if $Config{ZM_UPLOAD_PORT};
+				Info( "Uploading to ".$host." using SFTP\n" );
+				my %sftpOptions = ( host=>$Config{ZM_UPLOAD_HOST}, user=>$Config{ZM_UPLOAD_USER} );
+				$sftpOptions{password} = $Config{ZM_UPLOAD_PASS} if $Config{ZM_UPLOAD_PASS};
+				$sftpOptions{port} = $Config{ZM_UPLOAD_PORT} if $Config{ZM_UPLOAD_PORT};
+				$sftpOptions{timeout} = $Config{ZM_UPLOAD_TIMEOUT} if $Config{ZM_UPLOAD_TIMEOUT};
+				$sftpOptions{more} = [ '-o'=>'StrictHostKeyChecking=no' ];
+				$Net::SFTP::Foreign::debug = -1 if $Config{ZM_UPLOAD_DEBUG};
+				my $sftp = Net::SFTP::Foreign->new( $Config{ZM_UPLOAD_HOST}, %sftpOptions );
+				if ( $sftp->error )
+				{
+					Error( "Can't create SFTP connection: ".$sftp->error );
+					return( 0 );
+				}
+				$sftp->setcwd( $Config{ZM_UPLOAD_REM_DIR} ) or Error( "SFTP - Can't setcwd: ".$sftp->error ) if $Config{ZM_UPLOAD_REM_DIR};
+				$sftp->put( $archLocPath, $archFile ) or Error( "SFTP - Can't upload '$archLocPath': ".$sftp->error );
+			}; # end eval
+			Error( "error SFTP'ing: $@" ) if $@;
         }
         unlink( $archLocPath );
         my $sql = "update Events set Uploaded = 1 where Id = ?";
